@@ -47,7 +47,7 @@ from ...utils import (
     replace_return_docstrings,
 )
 from .configuration_llama4 import Llama4Config, Llama4TextConfig
-
+from transformers.quantizers.base import SequentialLlama4TextExperts
 
 if is_torch_flex_attn_available():
     from torch.nn.attention.flex_attention import BlockMask
@@ -152,7 +152,7 @@ class Llama4TextMoe(nn.Module):
         self.top_k = config.num_experts_per_tok
         self.hidden_dim = config.hidden_size
         self.num_experts = config.num_local_experts
-        self.experts = Llama4TextExperts(config)
+        self.experts = SequentialLlama4TextExperts(config)
         self.router = nn.Linear(config.hidden_size, config.num_local_experts, bias=False)
         self.shared_expert = Llama4TextMLP(config)
 
@@ -1587,6 +1587,7 @@ class Llama4ForConditionalGeneration(Llama4PreTrainedModel, GenerationMixin):
     base_model_prefix = ""
     config_class = Llama4Config
     _supports_flex_attn = True
+    _no_split_modules = ["Llama4TextDecoderLayer", "Llama4VisionEncoderLayer"]
 
     def __init__(self, config: Llama4Config):
         super().__init__(config)
